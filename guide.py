@@ -21,3 +21,17 @@ for msv in sinh_vien_can_xoa:
 # In toàn bộ từ điển ra màn hình
 print("Từ điển sau khi thao tác:")
 print(diem_tong_ket)
+
+# Nhập số lượng sinh viên và thông tin của họ
+so_luong_sinh_vien = int(input("Nhập số lượng sinh viên: "))
+diem_tong_ket = {}
+
+# Nhập thông tin cho từng sinh viên
+for i in range(so_luong_sinh_vien):
+    msv = input("Nhập mã số sinh viên: ")
+    diem = float(input("Nhập điểm tổng kết của sinh viên {}: ".format(msv)))
+    diem_tong_ket[msv] = diem
+
+# Hiển thị từ điển đã nhập
+print("Từ điển sinh viên:", diem_tong_ket)
+
