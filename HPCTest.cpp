@@ -1,73 +1,97 @@
 #include <iostream>
 #include <omp.h>
-#include <vector>
 #include <cstdlib>
 
-#define SIZE 10000000
+#define SIZE 1000
 
-void generate_numbers(std::vector<int>& vec) {
-    for (int i = 0; i < SIZE; i++) {
-        vec[i] = rand() % SIZE;
+void generate_matrix(int **matrix, int size) {
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            matrix[i][j] = rand() % size;
+        }
     }
 }
 
-void count_frequency(const std::vector<int>& vec, std::vector<int>& frequency) {
-    #pragma omp parallel for
-    for (int i = 0; i < vec.size(); i++) {
-        #pragma omp atomic
-        frequency[vec[i]]++;
+void count_frequency(int **matrix, int *frequency, int size) {
+    #pragma omp parallel for collapse(2)
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            #pragma omp atomic
+            frequency[matrix[i][j]]++;
+        }
     }
 }
 
-void bubble_sort(std::vector<int>& vec) {
-    for (int i = 0; i < vec.size() - 1; i++) {
-        for (int j = 0; j < vec.size() - 1 - i; j++) {
-            if (vec[j] > vec[j + 1]) {
-                int temp = vec[j];
-                vec[j] = vec[j + 1];
-                vec[j + 1] = temp;
+void multiply_matrices(int **A, int **B, int **C, int size) {
+    #pragma omp parallel for collapse(2)
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            C[i][j] = 0;
+            for (int k = 0; k < size; k++) {
+                C[i][j] += A[i][k] * B[k][j];
             }
+        }
+    }
+}
+
+void sum_matrices(int **A, int **B, int **C, long long &sumA, long long &sumB, long long &sumC, int size) {
+    #pragma omp parallel for reduction(+:sumA, sumB, sumC) collapse(2)
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            sumA += A[i][j];
+            sumB += B[i][j];
+            sumC += C[i][j];
         }
     }
 }
 
 int main() {
-    std::vector<int> array(SIZE);
-    std::vector<int> frequency(SIZE, 0);
-    long long sum = 0;
+    int **A = new int*[SIZE];
+    int **B = new int*[SIZE];
+    int **C = new int*[SIZE];
+    int *frequency = new int[SIZE]();
+    for (int i = 0; i < SIZE; i++) {
+        A[i] = new int[SIZE];
+        B[i] = new int[SIZE];
+        C[i] = new int[SIZE];
+    }
 
-    generate_numbers(array);
+    generate_matrix(A, SIZE);
+    generate_matrix(B, SIZE);
+
+    long long sumA = 0, sumB = 0, sumC = 0;
 
     #pragma omp parallel sections
     {
         #pragma omp section
-        {
-            #pragma omp parallel for reduction(+:sum)
-            for (int i = 0; i < array.size(); i++) {
-                sum += array[i];
-            }
-            std::cout << "Sum: " << sum << std::endl;
-        }
+        multiply_matrices(A, B, C, SIZE);
 
         #pragma omp section
-        {
-            bubble_sort(array);
-            std::cout << "Array sorted." << std::endl;
-        }
+        sum_matrices(A, B, C, sumA, sumB, sumC, SIZE);
 
         #pragma omp section
-        {
-            count_frequency(array, frequency);
-            std::cout << "Frequency count done." << std::endl;
-        }
+        count_frequency(A, frequency, SIZE);
     }
 
-    // Display frequency
-    for (int i = 0; i < frequency.size(); i++) {
+    std::cout << "Sum of A: " << sumA << std::endl;
+    std::cout << "Sum of B: " << sumB << std::endl;
+    std::cout << "Sum of C: " << sumC << std::endl;
+
+    for (int i = 0; i < SIZE; i++) {
         if (frequency[i] > 0) {
             std::cout << "Number " << i << " appears " << frequency[i] << " times." << std::endl;
         }
     }
+
+    for (int i = 0; i < SIZE; i++) {
+        delete[] A[i];
+        delete[] B[i];
+        delete[] C[i];
+    }
+    delete[] A;
+    delete[] B;
+    delete[] C;
+    delete[] frequency;
 
     return 0;
 }
