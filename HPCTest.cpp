@@ -6,22 +6,22 @@
 #define SIZE 10000000
 
 void generate_numbers(std::vector<int>& vec) {
-    for (int& num : vec) {
-        num = rand() % SIZE;
+    for (int i = 0; i < SIZE; i++) {
+        vec[i] = rand() % SIZE;
     }
 }
 
 void count_frequency(const std::vector<int>& vec, std::vector<int>& frequency) {
     #pragma omp parallel for
-    for (size_t i = 0; i < vec.size(); i++) {
+    for (int i = 0; i < vec.size(); i++) {
         #pragma omp atomic
         frequency[vec[i]]++;
     }
 }
 
 void bubble_sort(std::vector<int>& vec) {
-    for (size_t i = 0; i < vec.size() - 1; i++) {
-        for (size_t j = 0; j < vec.size() - 1 - i; j++) {
+    for (int i = 0; i < vec.size() - 1; i++) {
+        for (int j = 0; j < vec.size() - 1 - i; j++) {
             if (vec[j] > vec[j + 1]) {
                 int temp = vec[j];
                 vec[j] = vec[j + 1];
@@ -43,7 +43,7 @@ int main() {
         #pragma omp section
         {
             #pragma omp parallel for reduction(+:sum)
-            for (size_t i = 0; i < array.size(); i++) {
+            for (int i = 0; i < array.size(); i++) {
                 sum += array[i];
             }
             std::cout << "Sum: " << sum << std::endl;
@@ -63,7 +63,7 @@ int main() {
     }
 
     // Display frequency
-    for (size_t i = 0; i < frequency.size(); i++) {
+    for (int i = 0; i < frequency.size(); i++) {
         if (frequency[i] > 0) {
             std::cout << "Number " << i << " appears " << frequency[i] << " times." << std::endl;
         }
